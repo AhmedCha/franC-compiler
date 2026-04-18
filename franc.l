@@ -8,6 +8,8 @@
 /* This option tells Flex we are only reading one file, saving us from writing yywrap() */
 %option noyywrap 
 %option yylineno
+%option nounput
+%option noinput
 
 %%
 "//".* { /* Ignore single-line comments */ }
