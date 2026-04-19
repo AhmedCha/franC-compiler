@@ -176,6 +176,8 @@ expression:
     | expression SUPEG expression { $$ = creer_noeud_operation(SUPEG, $1, $3); }
     | expression '<' expression { $$ = creer_noeud_operation('<', $1, $3); }
     | expression '>' expression { $$ = creer_noeud_operation('>', $1, $3); }
+    | expression ET expression { $$ = creer_noeud_operation(ET, $1, $3); }
+    | expression OU expression { $$ = creer_noeud_operation(OU, $1, $3); }
     | '(' expression ')' { $$ = $2; }
     ;
 %%

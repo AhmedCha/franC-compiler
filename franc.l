@@ -32,8 +32,8 @@
 "!="                    { return DIFF; }
 "<="                    { return INFEG; }
 ">="                    { return SUPEG; }
-"&&"                    { return ET; }
-"||"                    { return OU; }
+"&&"|"et"               { return ET; }
+"||"|"ou"               { return OU; }
 
     /* --- IDENTIFIERS (Variable and Function names) --- */
 [a-zA-Z_][a-zA-Z0-9_]* { 
