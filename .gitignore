@@ -1,0 +1,5 @@
+# Ignorer le dossier de compilation contenant les fichiers générés (.o, lex.yy.c, franc.tab.*)
+build/
+
+# Ignorer l'exécutable final
+franc
