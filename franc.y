@@ -27,7 +27,7 @@ int yyerror(const char *s);
 }
 
 %token TYPE_ENTIER TYPE_REEL TYPE_CARACTERE CONSTANTE VIDE AFFICHER
-%token SI SINON TANT_QUE RETOURNE
+%token SI SINON TANT_QUE RETOURNE FONCTION
 %token EGAL DIFF INFEG SUPEG ET OU
 
 %token <entier> NOMBRE
@@ -44,7 +44,7 @@ int yyerror(const char *s);
 %left '*' '/'
 %left '(' ')'
 
-%type <noeud> expression instruction affectation affichage declaration liste_instructions bloc_instructions instruction_si instruction_boucle programme
+%type <noeud> expression instruction affectation affichage declaration liste_instructions bloc_instructions instruction_si instruction_boucle programme declaration_fonction appel_fonction
 %start programme
 
 %%
@@ -69,6 +69,9 @@ instruction:
     | affichage { $$ = $1; }
     | instruction_si { $$ = $1; }
     | instruction_boucle { $$ = $1; }
+    | declaration_fonction { $$ = NULL; }
+    | appel_fonction ';' { $$ = $1; }
+    | RETOURNE expression ';' { $$ = creer_noeud_retourne($2); }
     ;
 
 /* --- BLOC D'INSTRUCTIONS (Pour le contenu des Si/Sinon) --- */
@@ -164,6 +167,7 @@ expression:
             $$ = creer_noeud_identifiant($1);
         }
     }
+  | appel_fonction { $$ = $1; }
     /* Mathématiques */
     | expression '+' expression { $$ = creer_noeud_operation('+', $1, $3); }
     | expression '-' expression { $$ = creer_noeud_operation('-', $1, $3); }
@@ -180,6 +184,21 @@ expression:
     | expression OU expression { $$ = creer_noeud_operation(OU, $1, $3); }
     | '(' expression ')' { $$ = $2; }
     ;
+
+/* --- FONCTIONS --- */
+declaration_fonction:
+    FONCTION IDENTIFIANT '(' ')' bloc_instructions {
+        /* Enregistre la fonction dans la mémoire globale */
+        ajouter_fonction($2, $5);
+    }
+    ;
+
+appel_fonction:
+    IDENTIFIANT '(' ')' { 
+        $$ = creer_noeud_appel($1); 
+    }
+    ;
+
 %%
 
 /* --- C CODE: FUNCTIONS & MAIN --- */

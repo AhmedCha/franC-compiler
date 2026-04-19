@@ -78,7 +78,26 @@ Noeud *creer_noeud_tant_que(Noeud *condition, Noeud *corps) {
   return n;
 }
 
+Noeud *creer_noeud_appel(char *nom) {
+  Noeud *n = (Noeud *)malloc(sizeof(Noeud));
+  n->type = NODE_APPEL;
+  n->nom = strdup(nom);
+  n->gauche = n->droite = n->condition = n->branche_si = n->branche_sinon =
+      NULL;
+  return n;
+}
+
+Noeud *creer_noeud_retourne(Noeud *expression) {
+  Noeud *n = (Noeud *)malloc(sizeof(Noeud));
+  n->type = NODE_RETOURNE;
+  n->gauche = expression; /* La valeur à renvoyer */
+  n->droite = n->condition = n->branche_si = n->branche_sinon = NULL;
+  return n;
+}
+
 /* --- MOTEUR D'EXECUTION --- */
+bool retour_declenche = false;
+double valeur_retour = 0.0;
 
 double executer_ast(Noeud *n) {
   if (n == NULL)
@@ -157,7 +176,10 @@ double executer_ast(Noeud *n) {
 
   case NODE_SEQUENCE: {
     executer_ast(n->gauche);
-    executer_ast(n->droite);
+    /* Ne pas exécuter la suite si un "retourne" a été lu ! */
+    if (!retour_declenche) {
+      executer_ast(n->droite);
+    }
     return 0.0;
   }
 
@@ -176,6 +198,37 @@ double executer_ast(Noeud *n) {
       executer_ast(n->branche_si);
     }
     return 0.0;
+  }
+
+  case NODE_APPEL: {
+    Fonction *fonc = rechercher_fonction(n->nom);
+    if (fonc == NULL) {
+      fprintf(stderr, "Erreur d'execution : La fonction '%s' n'existe pas.\n",
+              n->nom);
+      exit(1);
+    }
+
+    /* Sauvegarde l'état du retour au cas où une fonction en appelle une autre
+     * (récursion) */
+    bool backup_retour = retour_declenche;
+    retour_declenche = false;
+
+    /* Exécute le corps de la fonction ! */
+    executer_ast(fonc->corps);
+
+    /* Capture la valeur de retour, puis réinitialise les flags */
+    double resultat = valeur_retour;
+    retour_declenche = backup_retour;
+    valeur_retour = 0.0;
+
+    return resultat;
+  }
+
+  case NODE_RETOURNE: {
+    /* On calcule la valeur, on active le flag d'arrêt, et on remonte ! */
+    valeur_retour = executer_ast(n->gauche);
+    retour_declenche = true;
+    return valeur_retour;
   }
   }
   return 0.0;

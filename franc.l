@@ -24,8 +24,9 @@
 "si"                    { return SI; }
 "sinon"                 { return SINON; }
 "tant_que"              { return TANT_QUE; }
-"retourne"              { return RETOURNE; }
 "vide"                  { return VIDE; }
+"fonction"              { return FONCTION; }
+"retourne"              { return RETOURNE; }
 
     /* --- MULTI-CHARACTER OPERATORS --- */
 "=="                    { return EGAL; }

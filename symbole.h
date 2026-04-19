@@ -19,8 +19,16 @@ typedef struct Symbole {
   struct Symbole *suivant;
 } Symbole;
 
+typedef struct Fonction {
+  char *nom;
+  struct Noeud
+      *corps; /* Pointeur vers l'AST contenant le code de la fonction */
+  struct Fonction *suivant;
+} Fonction;
+
 /* Variables globales définies ailleurs (dans franc.y/lex) */
 extern Symbole *table_symboles;
+extern Fonction *table_functions;
 extern int yylineno;
 extern int erreurs_totales;
 
@@ -28,5 +36,8 @@ extern int erreurs_totales;
 void ajouter_symbole(char *nom, TypeVar type, bool est_constante,
                      double valeur);
 Symbole *rechercher_symbole(char *nom);
+
+void ajouter_fonction(char *nom, struct Noeud *corps);
+Fonction *rechercher_fonction(char *nom);
 
 #endif

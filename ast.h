@@ -13,7 +13,9 @@ typedef enum {
   NODE_AFFICHER,
   NODE_SI,
   NODE_SEQUENCE,
-  NODE_TANT_QUE
+  NODE_TANT_QUE,
+  NODE_APPEL,
+  NODE_RETOURNE
 } TypeNoeud;
 
 /* Structure d'un noeud de l'arbre */
@@ -40,6 +42,8 @@ Noeud *creer_noeud_sequence(Noeud *instruction1, Noeud *instruction2);
 Noeud *creer_noeud_si(Noeud *condition, Noeud *branche_si,
                       Noeud *branche_sinon);
 Noeud *creer_noeud_tant_que(Noeud *condition, Noeud *corps);
+Noeud *creer_noeud_appel(char *nom);
+Noeud *creer_noeud_retourne(Noeud *expression);
 
 /* Prototype d'exécution */
 double executer_ast(Noeud *n);
