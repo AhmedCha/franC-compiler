@@ -97,6 +97,18 @@ double executer_ast(Noeud *n) {
 
   case NODE_OPERATION: {
     double val_gauche = executer_ast(n->gauche);
+
+    if ((int)n->valeur == ET) {
+      if (val_gauche == 0.0)
+        return 0.0;
+      return (executer_ast(n->droite) != 0.0) ? 1.0 : 0.0;
+    }
+    if ((int)n->valeur == OU) {
+      if (val_gauche != 0.0)
+        return 1.0;
+      return (executer_ast(n->droite) != 0.0) ? 1.0 : 0.0;
+    }
+
     double val_droite = executer_ast(n->droite);
 
     switch ((int)n->valeur) {
