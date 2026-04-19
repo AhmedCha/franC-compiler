@@ -1,0 +1,61 @@
+// Fichier : test_complet.franc
+
+// --- VARIABLES ET CONSTANTES ---
+entier a = 10;
+entier b = 3;
+constante entier MAX = 100;
+
+// --- MATHÉMATIQUES ET PRÉSÉANCE ---
+// Calcul : 10 + (3 * 2) - (100 / 10) = 6
+entier calcul = a + b * 2 - MAX / 10;
+afficher(calcul); // Affiche : 6
+
+// --- LOGIQUE CONDITIONNELLE ---
+si (a == 999) {
+    afficher(999);
+} sinon si (a != 10) {
+    afficher(888);
+} sinon {
+    afficher(1); // Affiche : 1
+}
+
+si (MAX >= 100) {
+    si (b < 5) {
+        afficher(2); // Affiche : 2
+        si (0) {
+            // Pas d'exécution
+        }
+    }
+}
+
+// --- BOUCLES TANT_QUE ---
+entier faux_compteur = 10;
+tant_que (faux_compteur < 5) {
+    faux_compteur = faux_compteur + 1;
+    afficher(999);
+} // Résultat : Aucune valeur affichée pour cette boucle
+
+entier i = 0;
+entier somme = 0;
+tant_que (i <= 3) {
+    somme = somme + i;
+    i = i + 1;
+}
+afficher(somme); // Affiche : 6
+
+// --- TEST DE STRESS ---
+entier x = 0;
+entier y = 0;
+entier total = 0;
+
+tant_que (x < 2) {
+    y = 0;
+    tant_que (y < 2) {
+        si (x == y) {
+            total = total + 1;
+        }
+        y = y + 1;
+    }
+    x = x + 1;
+}
+afficher(total); // Affiche : 2

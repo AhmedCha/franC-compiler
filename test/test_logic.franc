@@ -1,0 +1,27 @@
+// Fichier : test_logique.franc
+
+entier age = 20;
+constante entier age_majorite = 18;
+entier a_permis = 1;
+si (age >= 18 et a_permis == 1) {
+    afficher(1111); // Affiche : 1111
+} sinon {
+    afficher(0000);
+}
+
+afficher(age); // Affiche : 20
+
+si (age < 0) {
+    afficher(0);
+} sinon si (age >= age_majorite) {
+    afficher(1); // Affiche : 1
+} sinon {
+    afficher(2);
+}
+
+// Test de réaffectation conditionnelle
+entier prix = 100;
+si (prix == 100) {
+    prix = prix - 20; 
+}
+afficher(prix); // Affiche : 80

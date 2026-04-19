@@ -1,0 +1,5 @@
+entier compteur = 0;
+tant_que (compteur < 5) {
+    afficher(compteur); // Affiche : 0, 1, 2, 3, 4 (successivement)
+    compteur = compteur + 1;
+}

@@ -1,0 +1,14 @@
+// Déclaration de la fonction
+fonction dire_bonjour() {
+    afficher(1111); // Affiche : 1111 (lors de l'appel)
+    retourne 99;    // Renvoie la valeur 99
+    afficher(0000); // LIGNE NON EXÉCUTÉE (après retourne)
+}
+
+// Début du programme principal
+afficher(8888); // Affiche : 8888
+
+entier resultat = dire_bonjour();
+
+// Vérification du retour
+afficher(resultat); // Affiche : 99

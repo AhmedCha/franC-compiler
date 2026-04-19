@@ -1,0 +1,19 @@
+// Fichier : test_toutes_erreurs.franc
+
+// Erreur Sémantique : Redéclaration
+entier valeur = 10;
+entier valeur = 20; // ERREUR : La variable 'valeur' est déjà déclarée
+
+// Erreur Sémantique : Modification de constante
+constante entier max = 100;
+max = 200; // ERREUR : Impossible de modifier une constante
+
+// Erreur d'Exécution : Division par zéro
+entier calcul = valeur / 0; // ERREUR FATALE : Division par zéro
+
+// Erreur Lexicale : Caractère inconnu '@'
+entier prix = 50 @; // ERREUR LEXICALE : Caractère '@' invalide
+
+// Erreur Syntaxique : Point-virgule manquant
+entier total = 10 + 5 // ERREUR SYNTAXIQUE : ';' attendu
+afficher(total);

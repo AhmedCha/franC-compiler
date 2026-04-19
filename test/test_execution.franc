@@ -1,0 +1,10 @@
+// Fichier : test_execution.franc
+
+entier a = 10;
+entier b = 0;
+
+// La syntaxe et la sémantique sont correctes.
+// Mais l'exécution va provoquer une erreur fatale.
+entier piege = a / b; // ERREUR FATALE D'EXÉCUTION : Division par zéro
+
+afficher(piege); // Ligne non atteinte suite à l'erreur précédente

@@ -1,0 +1,21 @@
+// Redéclaration
+entier x = 5;
+entier x = 10; // ERREUR : 'x' est déjà déclaré
+
+// Modification d'une constante
+constante entier PI = 3;
+PI = 4; // ERREUR : 'PI' est constant
+
+// Affectation à une variable non déclarée
+y = 20; // ERREUR : 'y' n'est pas déclaré
+
+// Utilisation d'une variable non déclarée dans un calcul
+entier calcul = 100 + variable_fantome; // ERREUR : 'variable_fantome' n'existe pas
+
+// Utilisation d'une variable non déclarée dans une condition
+si (inconnu > 5) { // ERREUR : 'inconnu' n'est pas déclaré
+    afficher(1);
+}
+
+// Affichage d'une variable inexistante
+afficher(nexiste_pas); // ERREUR : 'nexiste_pas' n'est pas déclaré

@@ -1,0 +1,17 @@
+// Fichier : test_syntaxe.franc
+
+// Oubli du point-virgule
+entier a = 5 // ERREUR SYNTAXIQUE : ';' manquant
+
+// Oubli des parenthèses dans une condition SI
+si a == 5 { // ERREUR SYNTAXIQUE : Parenthèses '(' attendues
+    afficher(a);
+}
+
+// Mauvaise structure de boucle (parenthèses vides)
+tant_que () { // ERREUR SYNTAXIQUE : Condition attendue dans les parenthèses
+    afficher(0);
+}
+
+// Opérateur manquant dans un calcul
+entier b = 10 5; // ERREUR SYNTAXIQUE : Opérateur (+, -, *, /) manquant entre 10 et 5

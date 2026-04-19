@@ -1,0 +1,17 @@
+// Fichier : test_base.franc
+entier longueur = 15;
+entier largeur = 10;
+entier surface = longueur * largeur;
+constante entier bonus = 50;
+entier total = surface + bonus;
+
+afficher(total); // Affiche : 200
+
+reel pi = 3.14159;
+reel rayon = 10;
+reel aire = pi * rayon * rayon;
+
+afficher(aire); // Affiche : 314.159
+
+reel petit = 2.5e-3;
+afficher(petit); // Affiche : 0.0025
