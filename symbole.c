@@ -18,8 +18,8 @@ Symbole *rechercher_symbole(char *nom) {
 }
 
 /* Ajoute un nouveau symbole à la table */
-void ajouter_symbole(char *nom, TypeVar type, bool est_constante,
-                     double valeur) {
+void ajouter_symbole(char *nom, TypeVar type, bool est_constante, double valeur,
+                     char *valeur_chaine) {
   if (rechercher_symbole(nom) != NULL) {
     fprintf(
         stderr,
@@ -30,20 +30,23 @@ void ajouter_symbole(char *nom, TypeVar type, bool est_constante,
   }
 
   Symbole *nouveau = (Symbole *)malloc(sizeof(Symbole));
-  if (nouveau == NULL) {
-    fprintf(stderr, "Erreur fatale : Plus de memoire disponible.\n");
+  if (nouveau == NULL)
     exit(1);
-  }
 
   nouveau->nom = strdup(nom);
   nouveau->type = type;
   nouveau->est_constante = est_constante;
   nouveau->valeur = valeur;
 
-  /* Insérer en tête de la liste chaînée */
+  /* Si c'est une chaine, on copie le texte, sinon NULL */
+  if (valeur_chaine != NULL) {
+    nouveau->valeur_chaine = strdup(valeur_chaine);
+  } else {
+    nouveau->valeur_chaine = NULL;
+  }
+
   nouveau->suivant = table_symboles;
   table_symboles = nouveau;
-
   printf("[Info] Variable '%s' ajoutee a la table des symboles.\n", nom);
 }
 

@@ -26,7 +26,7 @@ int yyerror(const char *s);
     struct Noeud *noeud; 
 }
 
-%token TYPE_ENTIER TYPE_REEL TYPE_CARACTERE CONSTANTE VIDE AFFICHER
+%token TYPE_ENTIER TYPE_REEL TYPE_CARACTERE TYPE_CHAINE CONSTANTE VIDE AFFICHER
 %token SI SINON TANT_QUE RETOURNE FONCTION
 %token EGAL DIFF INFEG SUPEG ET OU
 
@@ -34,6 +34,7 @@ int yyerror(const char *s);
 %token <reel> REEL
 %token <caractere> CARACTERE_VAL
 %token <chaine> IDENTIFIANT
+%token <chaine> CHAINE_VAL
 
 /* --- PRECEDENCE DES OPERATEURS --- */
 %left OU
@@ -103,27 +104,43 @@ instruction_boucle:
 /* --- DECLARATIONS --- */
 declaration:
     TYPE_ENTIER IDENTIFIANT ';' {
-        ajouter_symbole($2, VAR_ENTIER, false, 0);
+        ajouter_symbole($2, VAR_ENTIER, false, 0, NULL);
         $$ = NULL; 
     }
     | TYPE_ENTIER IDENTIFIANT '=' expression ';' {
-        ajouter_symbole($2, VAR_ENTIER, false, 0);
+        ajouter_symbole($2, VAR_ENTIER, false, 0, NULL);
         $$ = creer_noeud_affectation($2, $4);
     }
     | CONSTANTE TYPE_ENTIER IDENTIFIANT '=' expression ';' {
-        ajouter_symbole($3, VAR_ENTIER, true, 0);
+        ajouter_symbole($3, VAR_ENTIER, true, 0, NULL);
         $$ = creer_noeud_affectation($3, $5);
     }
     | TYPE_REEL IDENTIFIANT ';' {
-        ajouter_symbole($2, VAR_REEL, false, 0.0);
+        ajouter_symbole($2, VAR_REEL, false, 0.0, NULL);
         $$ = NULL; 
     }
     | TYPE_REEL IDENTIFIANT '=' expression ';' {
-        ajouter_symbole($2, VAR_REEL, false, 0.0);
+        ajouter_symbole($2, VAR_REEL, false, 0.0, NULL);
+        $$ = creer_noeud_affectation($2, $4);
+    }
+    | TYPE_CARACTERE IDENTIFIANT ';' {
+        ajouter_symbole($2, VAR_CARACTERE, false, 0, NULL);
+        $$ = NULL; 
+    }
+    | TYPE_CARACTERE IDENTIFIANT '=' expression ';' {
+        ajouter_symbole($2, VAR_CARACTERE, false, 0, NULL);
+        $$ = creer_noeud_affectation($2, $4);
+    }
+    | TYPE_CHAINE IDENTIFIANT ';' {
+        ajouter_symbole($2, VAR_CHAINE, false, 0, ""); /* Chaine vide par défaut */
+        $$ = NULL; 
+    }
+    | TYPE_CHAINE IDENTIFIANT '=' expression ';' {
+        ajouter_symbole($2, VAR_CHAINE, false, 0, "");
         $$ = creer_noeud_affectation($2, $4);
     }
     | CONSTANTE TYPE_REEL IDENTIFIANT '=' expression ';' {
-        ajouter_symbole($3, VAR_REEL, true, 0.0);
+        ajouter_symbole($3, VAR_REEL, true, 0.0, NULL);
         $$ = creer_noeud_affectation($3, $5);
     }
     ;
@@ -157,6 +174,8 @@ affichage:
 expression:
     NOMBRE { $$ = creer_noeud_nombre($1); }
     | REEL { $$ = creer_noeud_nombre($1); }
+    | CARACTERE_VAL { $$ = creer_noeud_caractere($1); }
+    | CHAINE_VAL { $$ = creer_noeud_chaine($1); }
     | IDENTIFIANT {
         Symbole *sym = rechercher_symbole($1);
         if (sym == NULL) {

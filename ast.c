@@ -13,6 +13,24 @@ Noeud *creer_noeud_nombre(double valeur) {
   return n;
 }
 
+Noeud *creer_noeud_caractere(char c) {
+  Noeud *n = (Noeud *)malloc(sizeof(Noeud));
+  n->type = NODE_CARACTERE;
+  n->valeur = (double)c; /* Stocké comme code ASCII */
+  n->gauche = n->droite = n->condition = n->branche_si = n->branche_sinon =
+      NULL;
+  return n;
+}
+
+Noeud *creer_noeud_chaine(char *texte) {
+  Noeud *n = (Noeud *)malloc(sizeof(Noeud));
+  n->type = NODE_CHAINE;
+  n->chaine_val = strdup(texte);
+  n->gauche = n->droite = n->condition = n->branche_si = n->branche_sinon =
+      NULL;
+  return n;
+}
+
 Noeud *creer_noeud_identifiant(char *nom) {
   Noeud *n = (Noeud *)malloc(sizeof(Noeud));
   n->type = NODE_IDENTIFIANT;
@@ -107,6 +125,12 @@ double executer_ast(Noeud *n) {
   case NODE_NOMBRE:
     return n->valeur;
 
+  case NODE_CARACTERE:
+    return n->valeur;
+
+  case NODE_CHAINE:
+    return 0.0;
+
   case NODE_IDENTIFIANT: {
     Symbole *sym = rechercher_symbole(n->nom);
     if (sym != NULL)
@@ -160,15 +184,46 @@ double executer_ast(Noeud *n) {
   }
 
   case NODE_AFFECTATION: {
-    double resultat = executer_ast(n->droite);
     Symbole *sym = rechercher_symbole(n->nom);
     if (sym != NULL) {
+      /* Si c'est une affectation de chaine */
+      if (sym->type == VAR_CHAINE && n->droite->type == NODE_CHAINE) {
+        if (sym->valeur_chaine)
+          free(sym->valeur_chaine);
+        sym->valeur_chaine = strdup(n->droite->chaine_val);
+        return 0.0;
+      }
+      /* Sinon (nombres, caractères) */
+      double resultat = executer_ast(n->droite);
       sym->valeur = resultat;
+      return resultat;
     }
-    return resultat;
+    return 0.0;
   }
 
   case NODE_AFFICHER: {
+    /* L'intelligence de l'affichage ! */
+    if (n->gauche->type == NODE_CHAINE) {
+      printf(">>> %s\n", n->gauche->chaine_val);
+      return 0.0;
+    }
+    if (n->gauche->type == NODE_CARACTERE) {
+      printf(">>> %c\n", (char)n->gauche->valeur);
+      return 0.0;
+    }
+    if (n->gauche->type == NODE_IDENTIFIANT) {
+      Symbole *sym = rechercher_symbole(n->gauche->nom);
+      if (sym != NULL) {
+        if (sym->type == VAR_CARACTERE) {
+          printf(">>> %c\n", (char)sym->valeur);
+          return 0.0;
+        }
+        if (sym->type == VAR_CHAINE) {
+          printf(">>> %s\n", sym->valeur_chaine);
+          return 0.0;
+        }
+      }
+    }
     double resultat = executer_ast(n->gauche);
     printf(">>> %g\n", resultat);
     return 0.0;

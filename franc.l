@@ -19,6 +19,7 @@
 "entier"                { return TYPE_ENTIER; }
 "reel"                  { return TYPE_REEL; }
 "caractere"             { return TYPE_CARACTERE; }
+"chaine"                { return TYPE_CHAINE; }
 "constante"             { return CONSTANTE; }
 "afficher"              { return AFFICHER; }
 "si"                    { return SI; }
@@ -56,8 +57,15 @@
 
     /* --- CHARACTERS (e.g., 'a', 'Z') --- */
 \'[^\']\'               { 
-                            yylval.caractere = yytext[1]; 
+                            yylval.caractere = yytext[1]; /* Récupère la lettre entre les guillemets simples */
                             return CARACTERE_VAL; 
+                        }
+
+\"[^\"]*\"              { 
+                            /* Enlève les guillemets doubles du début et de la fin */
+                            yytext[strlen(yytext)-1] = '\0';
+                            yylval.chaine = strdup(yytext+1); 
+                            return CHAINE_VAL; 
                         }
 
     /* --- SINGLE CHARACTER TOKENS --- */

@@ -7,6 +7,8 @@
 /* Types de noeuds pour l'AST */
 typedef enum {
   NODE_NOMBRE,
+  NODE_CARACTERE,
+  NODE_CHAINE,
   NODE_IDENTIFIANT,
   NODE_OPERATION,
   NODE_AFFECTATION,
@@ -23,6 +25,7 @@ typedef struct Noeud {
   TypeNoeud type;
   double valeur;
   char *nom;
+  char *chaine_val;
 
   struct Noeud *gauche;
   struct Noeud *droite;
@@ -44,6 +47,8 @@ Noeud *creer_noeud_si(Noeud *condition, Noeud *branche_si,
 Noeud *creer_noeud_tant_que(Noeud *condition, Noeud *corps);
 Noeud *creer_noeud_appel(char *nom);
 Noeud *creer_noeud_retourne(Noeud *expression);
+Noeud *creer_noeud_caractere(char c);
+Noeud *creer_noeud_chaine(char *texte);
 
 /* Prototype d'exécution */
 double executer_ast(Noeud *n);

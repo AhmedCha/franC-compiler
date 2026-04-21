@@ -1,7 +1,7 @@
 # --- Variables ---
 CC = gcc
 # Ajout de -I. pour que les fichiers dans build/ trouvent les .h dans le dossier principal
-CFLAGS = -Wall -g -I.
+CFLAGS = -Wall -g -I. -I$(BUILD_DIR)
 BISON = bison
 FLEX = flex
 
