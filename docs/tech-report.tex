@@ -1,0 +1,234 @@
+\documentclass[pfe ,titlesmallcaps]{isi_report}
+
+% Packages pour le français et l'encodage
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\graphicspath{{./Figures/}}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{float}
+\usepackage{acronym}
+\usepackage{textcomp}
+
+\begin{document}
+\input{page_de_garde}
+
+\tableofcontents
+\newpage
+
+\chapter{Introduction}
+Dans le cadre du module de Techniques de Compilation, ce projet vise à concevoir et implémenter un compilateur/interpréteur complet pour un langage personnalisé nommé \textbf{franC}. Ce langage se distingue par sa syntaxe francisée, rendant la programmation plus accessible tout en conservant la puissance des concepts fondamentaux de la programmation impérative. Le projet englobe l'analyse lexicale, syntaxique, sémantique, ainsi que l'exécution directe via un Arbre Syntaxique Abstrait (AST).
+
+\chapter{Choix Technologiques}
+Pour garantir la robustesse et l'efficacité de l'interpréteur, les choix technologiques se sont portés sur des outils standards et éprouvés :
+\begin{itemize}
+	\item \textbf{Langage d'implémentation (C) :} Le C a été choisi pour sa gestion précise de la mémoire et ses performances. Il permet de manipuler les structures complexes de l'AST et la table des symboles de manière optimale.
+	\item \textbf{Flex (Fast Lexical Analyzer Generator) :} Utilisé pour l'analyse lexicale. Flex permet de transformer efficacement le flux de caractères source en unités lexicales (tokens) grâce aux expressions régulières.
+	\item \textbf{Bison (GNU Parser Generator) :} Utilisé pour l'analyse syntaxique. Bison génère un analyseur LALR(1) qui valide la structure du code source selon notre grammaire formelle et construit l'AST dynamiquement.
+	\item \textbf{Make :} Utilisé pour automatiser le processus de compilation du compilateur lui-même, en isolant proprement les fichiers générés dans un répertoire de construction (\texttt{build/}).
+\end{itemize}
+
+\chapter{Structure de la Grammaire et de l'AST}
+
+\section{L'Analyse Lexicale et Syntaxique}
+L'analyse du code source se fait en deux étapes. L'analyseur lexical (Flex) transforme le flux de caractères en \textit{Tokens} (Terminaux), puis l'analyseur syntaxique (Bison) valide la structure selon une grammaire formelle.
+
+\subsection{Notation et Définitions (Pseudo-BNF)}
+Pour décrire la syntaxe de \textbf{franC}, nous utilisons la notation \textbf{pseudo-BNF} (Backus-Naur Form). C'est un métalangage universel permettant de définir les règles de production d'un langage.
+
+\textbf{Légende de lecture :}
+\begin{itemize}
+	\item \textbf{\texttt{<Mot>}} : Un \textbf{Non-Terminal}. C'est une règle complexe qui se décompose en d'autres éléments.
+	\item \textbf{\texttt{MAJUSCULE}} ou \textbf{\texttt{"mot"}} : Un \textbf{Terminal} (Token). C'est l'élément de base final (ex: un chiffre, un mot-clé).
+	\item \textbf{\texttt{::=}} : Signifie "est défini par".
+	\item \textbf{\texttt{ | }} : Représente le choix logique (OU).
+	\item \textbf{\texttt{[ ]}} : Indique un élément \textbf{optionnel}.
+\end{itemize}
+
+\subsection{Grammaire formelle détaillée}
+Voici la structure acceptée par l'analyseur Bison :
+
+\begin{verbatim}
+<Programme>      ::= <Liste_Instructions>
+<Liste_Inst>     ::= <Instruction> | <Liste_Inst> <Instruction>
+<Instruction>    ::= <Declaration> | <Affectation> | <Affichage> 
+                   | <Instruction_Si> | <Instruction_Boucle> 
+                   | <Decl_Fonction> | <Appel_Fonction> ";" 
+                   | "retourne" <Expression> ";"
+
+<Declaration>    ::= ["constante"] <Type> IDENTIFIANT ["=" <Expression>] ";"
+<Type>           ::= "entier" | "reel" | "caractere" | "chaine"
+
+<Instruction_Si> ::= "si" "(" <Expression> ")" <Bloc> 
+                   [ "sinon" <Bloc> | "sinon" <Instruction_Si> ]
+
+<Expression>     ::= NOMBRE | REEL | CARACTERE_VAL | CHAINE_VAL | IDENTIFIANT
+                   | <Appel_Fonction>
+                   | <Expression> OP_ARITHMETIQUE <Expression>
+                   | <Expression> OP_LOGIQUE <Expression>
+                   | "(" <Expression> ")"
+\end{verbatim}
+
+\subsection{Décomposition des éléments clés}
+Chaque règle de la grammaire définit la manière dont les tokens sont assemblés :
+\begin{itemize}
+	\item \textbf{\texttt{<Liste\_Inst>}} : Utilise la \textbf{récursivité gauche}. Cela permet au compilateur de traiter un nombre illimité d'instructions les unes après les autres.
+	\item \textbf{\texttt{<Declaration>}} : Cette règle montre la flexibilité du langage. On peut déclarer une variable simple (\texttt{entier x;}) ou avec initialisation (\texttt{entier x = 10;}), avec ou sans le modificateur \texttt{constante}.
+	\item \textbf{\texttt{<Expression>}} : C'est l'élément le plus riche. Il est composé de valeurs simples (terminaux) ou de combinaisons récursives. Par exemple, l'expression \texttt{(A + 5) > 10} est décomposée en sous-expressions imbriquées. C'est cette structure qui permet à Bison de respecter la priorité des opérations (ex: la multiplication avant l'addition).
+\end{itemize}
+
+\section{L'Arbre Syntaxique Abstrait (AST)}
+Pendant que Bison valide la syntaxe, il construit en mémoire un \textbf{Arbre Syntaxique Abstrait}. L'AST est une représentation épurée du programme où seuls les éléments porteurs de sens (opérateurs, valeurs, noms de variables) sont conservés.
+
+\textbf{Composition d'un nœud AST :}
+Chaque élément de code devient un objet \texttt{struct Noeud} contenant :
+\begin{itemize}
+	\item \textbf{Le Type du Nœud} : Identifie l'action (Addition, Boucle, Affichage).
+	\item \textbf{La Valeur} : Stocke la donnée brute (un double, une chaîne, ou le nom d'un identifiant).
+	\item \textbf{Les Pointeurs de branchement} :
+	      \begin{itemize}
+		      \item \texttt{gauche/droite} : Pour les opérations binaires (\texttt{3 + 4}).
+		      \item \texttt{condition / branche\_si / branche\_sinon} : Pour les structures logiques.
+	      \end{itemize}
+\end{itemize}
+
+\textbf{Moteur d'interprétation :}
+L'exécution se fait par un parcours récursif de l'arbre. Pour un nœud \texttt{NODE\_AFFECTATION}, l'interpréteur évalue d'abord récursivement l'expression à droite du signe \texttt{=}, puis stocke le résultat final dans la Table des Symboles sous le nom contenu dans le nœud de gauche. Cette approche permet de gérer naturellement l'imbrication des fonctions et des calculs complexes.
+
+\section{L'AST et le Moteur d'Exécution}
+
+Plutôt que de générer du code machine (comme l'assembleur) ou du bytecode, \textbf{franC} utilise l'approche d'un interpréteur "Tree-Walk". Pendant que Bison valide la syntaxe, chaque règle de la grammaire alloue et relie dynamiquement une structure en mémoire pour former un Arbre Syntaxique Abstrait (AST).
+
+L'AST capture la logique du programme en éliminant les détails syntaxiques inutiles (comme les points-virgules ou les parenthèses).
+
+\textbf{Structure d'un Nœud :}
+Chaque nœud de l'arbre est défini par une structure C (\texttt{struct Noeud}) contenant :
+\begin{itemize}
+	\item \texttt{type} : Une énumération indiquant la nature de l'opération (\texttt{NODE\_OPERATION}, \texttt{NODE\_SI}, \texttt{NODE\_AFFECTATION}, etc.).
+	\item \texttt{valeur / nom / chaine\_val} : Les données brutes stockées dans le nœud (un chiffre, le nom d'une variable, ou du texte).
+	\item \textbf{Les pointeurs d'arborescence} : \texttt{gauche} et \texttt{droite} pour lier les enfants dans le cas d'opérations binaires (ex: \texttt{A + B}).
+	\item \textbf{Les pointeurs de contrôle} : \texttt{condition}, \texttt{branche\_si}, et \texttt{branche\_sinon} utilisés spécifiquement pour les conditions et les boucles.
+\end{itemize}
+
+\textbf{Le Fonctionnement du Moteur d'Exécution :}
+L'exécution du programme commence une fois la racine de l'AST entièrement générée. La fonction principale \texttt{executer\_ast(Noeud *n)} parcourt cet arbre de manière \textbf{récursive}.
+
+Par exemple, pour évaluer un nœud de type \texttt{NODE\_OPERATION} représentant une addition (\texttt{+}) :
+\begin{enumerate}
+	\item Le moteur s'appelle lui-même sur le nœud \texttt{gauche} pour évaluer la première partie de l'expression.
+	\item Il s'appelle ensuite sur le nœud \texttt{droite} pour évaluer la seconde partie.
+	\item Une fois les deux valeurs obtenues (remontées par la récursivité), il effectue l'addition native en C et retourne le résultat global.
+\end{enumerate}
+
+Cette récursivité permet de traiter des expressions d'une complexité infinie. Pour les structures de contrôle comme le \texttt{NODE\_TANT\_QUE}, l'interpréteur évalue la \texttt{condition} avec l'AST ; tant que celle-ci renvoie une valeur différente de zéro (Vrai), il appelle récursivement l'exécution sur la \texttt{branche\_si} (le corps de la boucle).
+
+\chapter{Défis Rencontrés et Solutions Apportées}
+
+\section{Évaluation et Court-circuit des Opérateurs Logiques}
+\textbf{Défi :} L'implémentation des opérateurs \texttt{ET} et \texttt{OU} nécessitait une évaluation conditionnelle pour éviter des erreurs ou des calculs inutiles (court-circuit).\\
+\textbf{Solution :} Modification de la fonction d'exécution de l'AST pour évaluer d'abord la branche gauche. Si le résultat de la branche gauche détermine l'issue finale (ex: gauche = faux pour un \texttt{ET}), la branche droite n'est tout simplement pas parcourue.
+
+\section{Gestion du flux avec "retourne"}
+\textbf{Défi :} Dans un bloc de code (séquence), l'apparition du mot-clé \texttt{retourne} doit arrêter immédiatement l'exécution des instructions suivantes et propager la valeur à l'appelant.\\
+\textbf{Solution :} Introduction de variables globales d'état (\texttt{retour\_declenche} et \texttt{valeur\_retour}). Lors de l'exécution d'un \texttt{NODE\_SEQUENCE}, le moteur vérifie si le drapeau de retour est levé avant de procéder à l'instruction suivante. Le contexte du drapeau est sauvegardé lors des appels imbriqués pour garantir un comportement correct lors de la récursion.
+
+\section{Gestion du typage dynamique à l'affichage}
+\textbf{Défi :} Imprimer correctement le contenu d'une variable sans forcer l'utilisateur à spécifier le type (comme en C avec \texttt{\%d} ou \texttt{\%s}).\\
+\textbf{Solution :} Le nœud \texttt{NODE\_AFFICHER} a été enrichi pour interroger la table des symboles dynamiquement. Si la variable est de type \texttt{VAR\_CHAINE}, il utilise \texttt{\%s} ; si elle est \texttt{VAR\_CARACTERE}, il utilise \texttt{\%c} ; sinon, il l'évalue comme un nombre avec \texttt{\%g}.
+
+\chapter{Guide Pratique et Exemples de Code}
+
+Afin d'illustrer concrètement la syntaxe et les capacités du langage \textbf{franC}, ce chapitre présente plusieurs exemples d'utilisation, allant de la déclaration de variables à l'implémentation d'une logique algorithmique complète.
+
+\section{Variables, Types et Affichage}
+Le langage supporte quatre types fondamentaux ainsi que la notion de constante. La fonction native \texttt{afficher()} adapte dynamiquement sa sortie en fonction du type de la variable qui lui est passée.
+
+\begin{verbatim}
+// Déclaration de variables simples
+entier age = 22;
+reel pi_approx = 3.1415;
+caractere initiale = 'F';
+chaine salutation = "Bonjour tout le monde !";
+
+// Déclaration d'une constante (immuable)
+constante entier MAX_UTILISATEURS = 100;
+
+// Affichage dynamique (le moteur sait comment formatter chaque type)
+afficher(salutation);
+afficher("Age de l'utilisateur :");
+afficher(age);
+\end{verbatim}
+
+\section{Structures de Contrôle et Boucles}
+\textbf{franC} permet de gérer le flux d'exécution grâce aux embranchements conditionnels et aux boucles \texttt{tant\_que}. Les opérateurs logiques \texttt{et} et \texttt{ou} permettent de créer des conditions complexes avec évaluation par court-circuit.
+
+\begin{verbatim}
+entier compteur = 5;
+
+// Boucle conditionnelle
+tant_que (compteur > 0) {
+    si (compteur == 3) {
+        afficher("Attention : le compteur est exactement à 3 !");
+    } sinon si (compteur > 3) {
+        afficher("Le compteur est élevé.");
+    } sinon {
+        afficher("Le compteur est bas.");
+    }
+    
+    // Décrémentation
+    compteur = compteur - 1;
+}
+\end{verbatim}
+
+\section{Fonctions et Valeurs de Retour}
+La déclaration de sous-programmes se fait avec le mot-clé \texttt{fonction}. L'instruction \texttt{retourne} permet d'interrompre l'exécution du bloc courant et de renvoyer le résultat à l'instruction appelante.
+
+\begin{verbatim}
+entier base = 10;
+entier multiplicateur = 5;
+
+// Définition d'une fonction (utilisant les variables globales)
+fonction calculer_produit() {
+    si (base <= 0 ou multiplicateur <= 0) {
+        retourne 0; // Court-circuit si les valeurs sont invalides
+    }
+    retourne base * multiplicateur;
+}
+
+// Appel de la fonction, affectation et affichage
+entier resultat = calculer_produit();
+
+afficher("Le résultat du produit est :");
+afficher(resultat);
+\end{verbatim}
+
+\chapter{Perspectives et Évolutions Futures}
+
+Bien que le langage \textbf{franC} réponde aux exigences initiales du cahier des charges et propose un environnement d'exécution fonctionnel, ce projet pose les fondations d'un interpréteur qui pourrait être grandement enrichi. Voici les principales pistes d'amélioration envisagées pour les prochaines itérations :
+
+\section{Portée des Variables (Scoping) et Paramètres de Fonctions}
+Actuellement, la Table des Symboles gère toutes les variables de manière globale. Une évolution majeure consisterait à implémenter des environnements locaux (une pile de tables de symboles). Cela permettrait de :
+\begin{itemize}
+	\item Créer des variables locales propres à chaque bloc \texttt{\{\}} ou fonction.
+	\item Permettre le passage d'arguments aux fonctions (ex: \texttt{fonction addition(entier a, entier b)}), rendant le code beaucoup plus modulaire et évitant l'utilisation systématique de variables globales.
+\end{itemize}
+
+\section{Structures de Données Complexes}
+Pour étendre les capacités algorithmiques du langage, l'ajout de structures de données agrégées est indispensable :
+\begin{itemize}
+	\item \textbf{Les Tableaux :} Permettre la déclaration et l'itération sur des listes d'éléments (ex: \texttt{entier tab[10];}).
+	\item \textbf{Types personnalisés (Structures) :} Permettre à l'utilisateur de regrouper plusieurs variables sous une même entité logique (similaire au \texttt{struct} en C).
+\end{itemize}
+
+\section{Gestion Avancée des Erreurs}
+Bien que l'analyseur signale les erreurs de syntaxe, le système pourrait être amélioré par des mécanismes de récupération d'erreurs (Error Recovery). Plutôt que de s'arrêter à la première anomalie, le compilateur pourrait identifier l'erreur, la signaler précisément avec la ligne et la colonne, puis continuer l'analyse pour remonter toutes les erreurs du fichier source en une seule exécution.
+
+\chapter{Conclusion}
+Le développement du langage \textbf{franC} de bout en bout a représenté un défi technique particulièrement enrichissant. Il a permis de concrétiser les concepts théoriques exigeants abordés en cours — tels que les expressions régulières, les grammaires hors contexte et la théorie des analyseurs LALR(1) — en un véritable produit logiciel.
+
+Ce projet a abouti à la création d'un interpréteur modulaire doté de fonctionnalités avancées. La gestion d'un typage riche, le traitement des constantes, l'évaluation par court-circuit et le support des fonctions avec valeur de retour prouvent la maturité de l'architecture choisie. Surtout, la maîtrise d'outils standards de l'industrie comme Flex, Bison et l'automatisation via Make a permis de bâtir un environnement de développement sain et évolutif en langage C.
+
+En définitive, concevoir ce compilateur nous a offert une compréhension profonde et transparente de la mécanique interne des langages de programmation que nous utilisons au quotidien. Si \textbf{franC} peut encore évoluer pour intégrer des structures de données complexes ou une véritable machine virtuelle, les fondations posées par son moteur d'évaluation par arbre syntaxique sont d'ores et déjà un franc succès.
+
+\end{document}
